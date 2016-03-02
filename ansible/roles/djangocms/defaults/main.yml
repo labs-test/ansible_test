@@ -1,0 +1,5 @@
+---
+djangocms_user: "djangocms"
+django_cms_version: "3.2"
+django_version: "1.8"
+cms_project_dir: "labstercms"

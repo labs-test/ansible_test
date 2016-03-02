@@ -1,0 +1,28 @@
+# Only implemented for debian
+- include: setup-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- user: name={{ djangocms_user }} system=yes createhome=yes
+
+- template: src=templates/requirements.txt.j2 dest=~{{ djangocms_user }}/requirements.txt owner={{ djangocms_user }} group={{ djangocms_user }} mode=0644
+
+- pip: requirements=~{{ djangocms_user }}/requirements.txt virtualenv=~{{ djangocms_user }}/venv
+  become: yes
+  become_user: "{{ djangocms_user }}"
+
+- template: src=build_initial_project.sh.j2 dest=~{{ djangocms_user }}/build_initial_project.sh owner={{ djangocms_user }} group={{ djangocms_user }} mode=0744
+
+- name: Make initial djangocms project
+  command: "~{{ djangocms_user }}/build_initial_project.sh"
+  args:
+    chdir: "~{{ djangocms_user }}"
+    creates: "{{ cms_project_dir }}"
+  become: yes
+  become_user: "{{ djangocms_user }}"
+
+- template: src=labster_uwsgi.ini.j2 dest=~{{ djangocms_user }}/labster_uwsgi.ini owner={{ djangocms_user }} group={{ djangocms_user }} mode=0644
+
+- template: src=upstart_labster_uwsgi.conf.j2 dest=/etc/init/labstercms.conf mode=0644
+  become: yes
+
+- service: name=labstercms state=started

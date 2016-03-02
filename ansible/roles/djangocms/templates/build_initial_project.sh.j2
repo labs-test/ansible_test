@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+# This assumes ansible has setup everything, but lets check
+
+mkdir -p {{ cms_project_dir }}
+source venv/bin/activate
+djangocms -q -p labstercms \
+    --db mysql://{{ cmsdb_common_name }}:{{ cmsdb_password }}@127.0.0.1:3306/cmsdb \
+    --i18n no \
+    --use-tz no \
+    --reversion no \
+    --permissions no \
+    --languages en \
+    --django-version 1.8 \
+    --cms-version 3.2 \
+    --starting-page yes \
+    labstercms

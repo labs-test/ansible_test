@@ -1,0 +1,8 @@
+- file: path={{ backup_directory }} state=directory mode=0755
+
+- template: src=backup_mysql_locally.sh.j2 dest=/usr/local/bin/backup_mysql_locally.sh mode=0744
+- template: src=backup_mysql_locally_cleanup.sh.j2 dest=/usr/local/bin/backup_mysql_locally_cleanup.sh mode=0744
+
+# Will install in root's crontab, I would prefer it in /etc/cron.daily, though
+- cron: name="MySQL local backup job" special_time=daily job=/usr/local/bin/backup_mysql_locally.sh
+- cron: name="MySQL local backup cleanup job" special_time=daily job=/usr/local/bin/backup_mysql_locally_cleanup.sh

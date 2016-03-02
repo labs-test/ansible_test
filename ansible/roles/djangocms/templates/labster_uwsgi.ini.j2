@@ -1,0 +1,12 @@
+[uwsgi]
+chdir           = /home/{{ djangocms_user }}/{{ cms_project_dir }}
+
+module          = {{ cms_project_dir }}.wsgi
+# the virtualenv (full path)
+home            = /home/{{ djangocms_user }}/venv
+
+master          = true
+processes       = 2
+socket          = {{ socket_file }}
+chmod-socket    = 666
+vacuum          = true

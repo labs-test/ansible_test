@@ -1,0 +1,11 @@
+description "uWSGI labstercms"
+
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+setuid djangocms
+setgid djangocms
+
+respawn
+
+exec /home/{{ djangocms_user }}/venv/bin/uwsgi --master --die-on-term --ini /home/{{ djangocms_user }}/labster_uwsgi.ini

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+# This is meant to be run by root, 
+# and mysql should be setup such root has all access to mysql
+
+#
+# This logs to syslog of activities, it should be coupled with
+# a system to notify someone if it fails
+#
+
+set -o pipefail
+
+SCRIPTNAME=$(basename $0)
+BACKUP_LOCATION={{ backup_directory }}
+MAX_WAITTIME_ON_LOAD=3600 # In seconds
+
+
+function log {
+    logger "$SCRIPTNAME: $@"
+}
+
+# Ensure only one instance of this script is running
+exec 300>/var/run/$SCRIPTNAME
+if ! flock -x -n 300; then
+    log "Another script is already running, bailing out"
+    exit 1
+fi
+
+
+WAIT_ON_LOAD_STARTTIME=`date +%s`
+
+# Bash does not do floats, hence using bc. We use the 5 min load average
+while [ $(bc <<< "`awk '{print $2}' /proc/loadavg` >= 2.0") -eq 1 ]; do
+    # Handle high load here
+    # Check if it is time to quit
+    if [ $((`date +%s` - $WAIT_ON_LOAD_STARTTIME)) -gt ${MAX_WAITTIME_ON_LOAD} ]; then
+        log "Backup failed due to load"
+        exit 2
+    fi
+    sleep 10
+done
+
+# TMP Backupfile to ensure that only complete backup files
+# are present
+TMP_BACKUPFILE=`mktemp --tmpdir=$BACKUP_LOCATION`
+
+# Cleanup on exit if backup fails
+trap 'test -f $TMP_BACKUPFILE && rm $TMP_BACKUPFILE' EXIT
+
+BACKUP_STARTTIME=`date +"%Y-%m-%d-%H_%M_%S"`
+if mysqldump --events --all-databases | gzip > $TMP_BACKUPFILE; then
+    BACKUP_FILE="${BACKUP_LOCATION}/mysql_backup_${BACKUP_STARTTIME}.gz"
+    # We now have a complete backup, move to final file
+    mv "$TMP_BACKUPFILE" "$BACKUP_FILE" && \
+        log "MySQL backed up to $BACKUP_FILE" || \
+        (log "MySQL failed, could not finalize backup"; exit 3)
+else
+    log "MySQL failed to back up"
+    exit 4
+fi
+
+exit 0

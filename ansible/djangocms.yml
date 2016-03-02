@@ -1,0 +1,43 @@
+---
+-   hosts: djangocmsservers
+    remote_user: bach
+    become: yes
+    vars:
+        cmsdb_common_name: cmsdb
+        cmsdb_password: "1234"
+        mysql_root_password: sshhh
+        socket_file: "/tmp/labstercms.sock"
+        mysql_bind_address: 127.0.0.1
+        mysql_databases:
+          - name: "{{ cmsdb_common_name }}"
+            encoding: utf8
+            collation: utf8_general_ci
+        mysql_users:
+          - name: "{{ cmsdb_common_name }}"
+            host: "%"
+            password: "{{ cmsdb_password }}"
+            priv: "{{ cmsdb_common_name }}.*:ALL"
+
+        nginx_upstreams:
+            - name: django
+              servers: {
+                 "unix:///tmp/labstercms.sock"
+             }
+        nginx_remove_default_vhost: true
+        nginx_vhosts:
+          - listen: "80"
+            server_name: "labstercms localhost 127.0.0.1"
+            access_log: "/var/log/nginx/access.log"
+            error_log: "/var/log/nginx/error.log"
+            charset: "utf-8"
+            extra_parameters: |
+                location / {
+                    uwsgi_pass  django;
+                    include     /etc/nginx/uwsgi_params;
+                }
+
+    roles:
+          - mysql
+          - nginx
+          - djangocms
+          - mysql-local-backup

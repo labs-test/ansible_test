@@ -1,0 +1,17 @@
+- name: Ensure Python is installed.
+  apt: "name=python state=installed"
+
+- name: Ensure Python-dev is installed.
+  apt: "name=python-dev state=installed"
+
+- name: Ensure Pip is installed.
+  apt: "name=python-pip state=installed"
+
+- name: Ensure Python virtualenv is installed.
+  apt: "name=python-virtualenv state=installed"
+
+- name: Ensure libmysqlclient-dev is installed. (Needed by mysql-python)
+  apt: "name=libmysqlclient-dev state=installed"
+
+- name: Pillow build dependencies
+  apt: name=python-imaging state=build-dep

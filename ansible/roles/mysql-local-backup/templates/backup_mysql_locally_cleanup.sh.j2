@@ -1,0 +1,11 @@
+#/bin/sh
+
+set -e
+
+# This will basically delete files older than 7 days 
+# matching 'mysql_backup*.gz' in {{ backup_directory }}.
+# So to have 7 successful backups; it is assumed that backup
+# runs successfully, and if they don't it is taken care of.
+
+find {{ backup_directory }} -type f -name 'mysql_backup*.gz' -mtime +7 -exec rm -rf {} \;
+exit 0
